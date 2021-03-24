@@ -1,36 +1,42 @@
 import socket
-import sys
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Bind the socket to the port
-server_address = ('localhost', 8070)
-print(sys.stderr, 'starting up on %s port %s' % server_address)
-sock.bind(server_address)
-
-# Listen for incoming connections
-sock.listen(1)
+sock = socket.socket()
+sock.bind(('', 9092))
+sock.listen(5)
 
 while True:
-    # Wait for a connection
-    print(sys.stderr, 'waiting for a connection')
-    connection, client_address = sock.accept()
+    conn, addr = sock.accept()
+    print('connected:', addr)
+    data = conn.recv(1024)
 
-    try:
-        print(sys.stderr, 'connection from', client_address)
+    if len(data) > 0:
+        request = data.decode("utf-8").split('\n')
+        headers = request[:-2]
+        mainInformation = headers[0].split(' ')
+        method = mainInformation[0]
+        path = mainInformation[1]
+        print('method:', method, ' path:', path)
 
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(16)
-            print(sys.stderr, 'received "%s"' % data)
-            if data:
-                print(sys.stderr, 'sending data back to the client')
-                connection.sendall(data)
-            else:
-                print(sys.stderr, 'no more data from', client_address)
-                break
+    if not data:
+        break
 
-    finally:
-        # Clean up the connection
-        connection.close()
+    response_body = [
+        '<html><body><h1>Hello, world!</h1>',
+        '<p>This page is in location %(request_uri)r, was requested ' % locals(),
+        'using %(request_method)r, and with %(request_proto)r.</p>' % locals(),
+        '<p>Request body is %(request_body)r</p>' % locals(),
+        '<p>Actual set of headers received:</p>',
+        '<p>hahhahahaha</p',
+        '</body></html>',
+    ]
+    response_body_raw = ''.join(response_body)
+
+    response_headers = {
+        'Content-Type': 'text/html; encoding=utf8',
+        'Content-Length': len(response_body_raw),
+        'Connection': 'close',
+    }
+
+    conn.send(resp.encode())
+    conn.close()
+
