@@ -2,6 +2,20 @@ import socket
 
 MAX_PACKET = 32768
 
+mimeTypes = {
+    'html': 'text/html',
+    'js': 'application/javascript',
+    'css': 'text/css',
+    'ico': 'image/x-icon',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'gif': 'image/gif',
+    'svg': 'image/svg+xml',
+    'json': 'application/json',
+    'woff': 'font/woff',
+    'woff2': 'font/woff2'
+}
+
 def recv_all(sock):
     return sock.recv(MAX_PACKET).decode("utf-8")
 
@@ -25,27 +39,33 @@ def run():
 
         request_method, request_uri, request_proto = request_headline.split(' ', 3)
 
-        response_body = [
-            '<html><body><h1>Hello, world!</h1>',
-            '<p>This page is in location %(request_uri)r, was requested ' % locals(),
-            'using %(request_method)r, and with %(request_proto)r.</p>' % locals(),
-            '<p>Request body is %(request_body)r</p>' % locals(),
-            '<p>Actual set of headers received:</p>',
-            '<ul>',
-        ]
+        # response_body = [
+        #     '<html><body><h1>Hello, world!</h1>',
+        #     '<p>This page is in location %(request_uri)r, was requested ' % locals(),
+        #     'using %(request_method)r, and with %(request_proto)r.</p>' % locals(),
+        #     '<p>Request body is %(request_body)r</p>' % locals(),
+        #     '<p>Actual set of headers received:</p>',
+        #     '<ul>',
+        # ]
+        #
+        # for request_header_name, request_header_value in request_headers.items():
+        #     response_body.append('<li><b>%r</b> == %r</li>' % (request_header_name, request_header_value))
+        #
+        # response_body.append('</ul></body></html>')
 
-        for request_header_name, request_header_value in request_headers.items():
-            response_body.append('<li><b>%r</b> == %r</li>' % (request_header_name, request_header_value))
 
-        response_body.append('</ul></body></html>')
+        f = open(request_uri[1:], "r")
+        response_body_raw = ''.join(f.read())
 
-        response_body_raw = ''.join(response_body)
+        _, content_type = request_uri.split('.', 2)
 
         response_headers = {
-            'Content-Type': 'text/html; encoding=utf8',
+            # 'Content-Type': 'text/html; encoding=utf8',
             'Content-Length': len(response_body_raw),
             'Connection': 'close',
         }
+
+        response_headers['Content-Type'] = mimeTypes[content_type]
 
         response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
 
