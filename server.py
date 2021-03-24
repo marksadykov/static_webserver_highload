@@ -10,13 +10,13 @@ def normalize_line_endings(s):
 
 def run():
     server_sock = socket.socket()
-    server_sock.bind(('0.0.0.0', 13000))
+    server_sock.bind(('0.0.0.0', 13001))
     server_sock.listen(1)
 
     while True:
         client_sock, client_addr = server_sock.accept()
 
-        request = normalize_line_endings(recv_all(client_sock)) # hack again
+        request = normalize_line_endings(recv_all(client_sock))
         request_head, request_body = request.split('\n\n', 1)
 
         request_head = request_head.splitlines()
@@ -49,13 +49,12 @@ def run():
 
         response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
 
-        # Reply as HTTP/1.1 server, saying "HTTP OK" (code 200).
         response_proto = 'HTTP/1.1'
         response_status = '200'
         response_status_text = 'OK'
 
-        # sending all this stuff
         client_sock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+        client_sock.send('\n'.encode())
         client_sock.send(response_headers_raw.encode())
         client_sock.send('\n'.encode())
         client_sock.send(response_body_raw.encode())
