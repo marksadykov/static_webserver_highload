@@ -1,4 +1,5 @@
 import socket
+from io import BytesIO
 
 MAX_PACKET = 32768
 
@@ -24,7 +25,7 @@ def normalize_line_endings(s):
 
 def run():
     server_sock = socket.socket()
-    server_sock.bind(('0.0.0.0', 13001))
+    server_sock.bind(('0.0.0.0', 13002))
     server_sock.listen(1)
 
     while True:
@@ -53,19 +54,28 @@ def run():
         #
         # response_body.append('</ul></body></html>')
 
+        print('56', request_uri)
 
-        f = open(request_uri[1:], "r")
-        response_body_raw = ''.join(f.read())
 
         _, content_type = request_uri.split('.', 2)
+        content_length = 0
+        response_body_raw = ''
+        if content_type == 'html' or content_type == 'css' or content_type == 'js':
+            f = open(request_uri[1:], "r")
+            response_body_raw = ''.join(f.read())
+            content_length = len(response_body_raw)
+        else:
+            f = open(request_uri[1:], "rb")
+            response_body_raw = f
 
         response_headers = {
             # 'Content-Type': 'text/html; encoding=utf8',
-            'Content-Length': len(response_body_raw),
+            # 'Content-Length': len(response_body_raw),
             'Connection': 'close',
         }
 
         response_headers['Content-Type'] = mimeTypes[content_type]
+        response_headers['Content-Length'] = content_length
 
         response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
 
@@ -77,7 +87,11 @@ def run():
         client_sock.send('\n'.encode())
         client_sock.send(response_headers_raw.encode())
         client_sock.send('\n'.encode())
-        client_sock.send(response_body_raw.encode())
+
+        if content_type == 'html' or content_type == 'css' or content_type == 'js':
+            client_sock.send(response_body_raw.encode())
+        else:
+            client_sock.send(BytesIO(response_body_raw))
 
         client_sock.close()
 
