@@ -25,7 +25,7 @@ def normalize_line_endings(s):
 
 def run():
     server_sock = socket.socket()
-    server_sock.bind(('0.0.0.0', 13002))
+    server_sock.bind(('0.0.0.0', 13000))
     server_sock.listen(1)
 
     while True:
@@ -66,7 +66,8 @@ def run():
             content_length = len(response_body_raw)
         else:
             f = open(request_uri[1:], "rb")
-            response_body_raw = f
+            response_body_raw = f.read()
+            print('70', type(response_body_raw), response_body_raw)
 
         response_headers = {
             # 'Content-Type': 'text/html; encoding=utf8',
@@ -91,7 +92,7 @@ def run():
         if content_type == 'html' or content_type == 'css' or content_type == 'js':
             client_sock.send(response_body_raw.encode())
         else:
-            client_sock.send(BytesIO(response_body_raw))
+            client_sock.send(response_body_raw)
 
         client_sock.close()
 
