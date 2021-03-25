@@ -10,11 +10,13 @@ mimeTypes = {
     'ico': 'image/x-icon',
     'png': 'image/png',
     'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
     'gif': 'image/gif',
     'svg': 'image/svg+xml',
     'json': 'application/json',
     'woff': 'font/woff',
-    'woff2': 'font/woff2'
+    'woff2': 'font/woff2',
+    'swf': 'application/x-shockwave-flash',
 }
 
 def recv_all(sock):
@@ -40,23 +42,16 @@ def run():
 
         request_method, request_uri, request_proto = request_headline.split(' ', 3)
 
-        # response_body = [
-        #     '<html><body><h1>Hello, world!</h1>',
-        #     '<p>This page is in location %(request_uri)r, was requested ' % locals(),
-        #     'using %(request_method)r, and with %(request_proto)r.</p>' % locals(),
-        #     '<p>Request body is %(request_body)r</p>' % locals(),
-        #     '<p>Actual set of headers received:</p>',
-        #     '<ul>',
-        # ]
-        #
-        # for request_header_name, request_header_value in request_headers.items():
-        #     response_body.append('<li><b>%r</b> == %r</li>' % (request_header_name, request_header_value))
-        #
-        # response_body.append('</ul></body></html>')
-
         print('request_uri', request_uri)
 
-        _, content_type = request_uri.split('.', 2)
+        content_type = ''
+        checkFileOrDir = request_uri.find('.')
+        if checkFileOrDir == -1:
+            content_type = 'html'
+            request_uri += 'index.html'
+        else:
+            _, content_type = request_uri.split('.', 2)
+
         content_length = 0
         response_body_raw = ''
         if content_type == 'html' or content_type == 'css' or content_type == 'js':
