@@ -54,8 +54,7 @@ def run():
         #
         # response_body.append('</ul></body></html>')
 
-        print('56', request_uri)
-
+        print('request_uri', request_uri)
 
         _, content_type = request_uri.split('.', 2)
         content_length = 0
@@ -67,11 +66,8 @@ def run():
         else:
             f = open(request_uri[1:], "rb")
             response_body_raw = f.read()
-            print('70', type(response_body_raw), response_body_raw)
 
         response_headers = {
-            # 'Content-Type': 'text/html; encoding=utf8',
-            # 'Content-Length': len(response_body_raw),
             'Connection': 'close',
         }
 
