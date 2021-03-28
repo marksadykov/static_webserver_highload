@@ -52,8 +52,10 @@ def server():
 
         if process_current.isDoc(content_type):
             client_sock.send(response_body_raw.encode())
+            client_sock.send('\n'.encode())
         else:
             client_sock.send(response_body_raw)
+            client_sock.send('\n'.encode())
 
         client_sock.close()
 

@@ -57,7 +57,7 @@ class Process:
             return '', Config.consts['Bad_Request'], 0, ''
 
         response_status = Config.consts['OK']
-        response_body_raw = ''
+        response_body_raw = ' '
         content_length = 0
         response_status_text = Config.consts['OK_status']
 
