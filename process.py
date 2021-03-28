@@ -1,3 +1,5 @@
+import re
+
 from config import Config
 
 
@@ -8,9 +10,23 @@ class Process:
         else:
             return False
 
+    def decodeUnicode(self, request_uri):
+        result = re.findall(r'%..', request_uri)
+        for item in result:
+            change = int(('0x' + item[1:]), 16)
+            request_uri = request_uri.replace(item, chr(change))
+
+        return request_uri
+
     def isDir(self, request_uri):
 
         content_type = ''
+
+        request_uri = self.decodeUnicode(request_uri)
+
+        if request_uri.find('?') != -1:
+            findSymbol = request_uri.find('?')
+            request_uri = request_uri[:findSymbol]
 
         if request_uri[-1:] == '/' and request_uri.find('.') != -1:
             content_type = 'html'
@@ -42,7 +58,7 @@ class Process:
                 f = open(request_uri[1:], "r")
                 response_body_raw = ''.join(f.read())
                 content_length = len(response_body_raw)
-            except FileNotFoundError or NotADirectoryError:
+            except:
                 response_status_text = ''
                 if (request_uri[-10:] == 'index.html'):
                     response_status = Config.consts['Forbidden']
