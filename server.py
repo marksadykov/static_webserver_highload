@@ -17,6 +17,7 @@ mimeTypes = {
     'woff': 'font/woff',
     'woff2': 'font/woff2',
     'swf': 'application/x-shockwave-flash',
+    'txt': 'text/plain',
 }
 
 def recv_all(sock):
@@ -44,23 +45,42 @@ def run():
 
         print('request_uri', request_uri)
 
+        if request_uri[-1:] == '/':
+            request_uri = request_uri[0:-1]
+
         content_type = ''
         checkFileOrDir = request_uri.find('.')
         if checkFileOrDir == -1:
             content_type = 'html'
             request_uri += 'index.html'
+
         else:
             _, content_type = request_uri.split('.', 2)
 
         content_length = 0
+        response_status = '200'
         response_body_raw = ''
-        if content_type == 'html' or content_type == 'css' or content_type == 'js':
-            f = open(request_uri[1:], "r")
-            response_body_raw = ''.join(f.read())
-            content_length = len(response_body_raw)
+
+        if content_type == 'html' or content_type == 'css' or content_type == 'js' or content_type == 'txt':
+
+            f = ''
+            try:
+                f = open(request_uri[1:], "r")
+                response_body_raw = ''.join(f.read())
+                content_length = len(response_body_raw)
+            except FileNotFoundError:
+                if (request_uri[-10:] == 'index.html'):
+                    response_status = '403'
+                else:
+                    response_status = '404'
         else:
-            f = open(request_uri[1:], "rb")
-            response_body_raw = f.read()
+            if request_uri == '/favicon.ico':
+                request_uri = '/httptest' + request_uri
+            try:
+                f = open(request_uri[1:], "rb")
+                response_body_raw = f.read()
+            except FileNotFoundError:
+                response_status = '404'
 
         response_headers = {
             'Connection': 'close',
@@ -72,7 +92,6 @@ def run():
         response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
 
         response_proto = 'HTTP/1.1'
-        response_status = '200'
         response_status_text = 'OK'
 
         client_sock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
@@ -80,7 +99,7 @@ def run():
         client_sock.send(response_headers_raw.encode())
         client_sock.send('\n'.encode())
 
-        if content_type == 'html' or content_type == 'css' or content_type == 'js':
+        if content_type == 'html' or content_type == 'css' or content_type == 'js' or content_type == 'txt':
             client_sock.send(response_body_raw.encode())
         else:
             client_sock.send(response_body_raw)
