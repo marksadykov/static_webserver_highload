@@ -32,7 +32,7 @@ def server():
 
         content_type, request_uri = process_current.isDir(request_uri)
 
-        response_body_raw, response_status, content_length, response_status_text = process_current.readFile(content_type, request_uri)
+        response_body_raw, response_status, content_length, response_status_text = process_current.readFile(content_type, request_uri, request_method)
 
         response_headers = {
             'Connection': 'close',

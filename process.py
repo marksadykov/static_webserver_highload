@@ -4,6 +4,10 @@ from config import Config
 
 
 class Process:
+    def find_all(self, string, target):
+        indexes = [i for i in range(len(string)) if string.startswith(target, i)]
+        return max(indexes)
+
     def isDoc(self, content_type):
         if content_type == 'html' or content_type == 'css' or content_type == 'js' or content_type == 'txt':
             return True
@@ -41,15 +45,21 @@ class Process:
             request_uri += '/index.html'
 
         else:
-            _, content_type = request_uri.split('.', 2)
+            dotIndex = self.find_all(request_uri, '.') + 1
+            # _, content_type = request_uri.split('.', 2)
+            content_type = request_uri[dotIndex:]
 
         return content_type, request_uri
 
-    def readFile(self, content_type, request_uri,):
+    def readFile(self, content_type, request_uri, request_method):
+
+        if request_method == 'POST':
+            return '', Config.consts['Bad_Request'], 0, ''
+
         response_status = Config.consts['OK']
         response_body_raw = ''
         content_length = 0
-        response_status_text = Config.consts['version']
+        response_status_text = Config.consts['OK_status']
 
         if self.isDoc(content_type):
 

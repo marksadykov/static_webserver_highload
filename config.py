@@ -3,11 +3,12 @@ class Config:
     consts = {
         'max_packet': 32768,
         'url': '0.0.0.0',
-        'port': 13000,
+        'port': 13001,
 
         'OK': '200',
         'Forbidden': '403',
         'Not_Found': '404',
+        'Bad_Request': '400',
 
         'OK_status': 'OK',
 
