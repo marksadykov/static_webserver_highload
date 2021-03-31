@@ -46,7 +46,6 @@ class Process:
 
         else:
             dotIndex = self.find_all(request_uri, '.') + 1
-            # _, content_type = request_uri.split('.', 2)
             content_type = request_uri[dotIndex:]
 
         return content_type, request_uri
@@ -54,6 +53,9 @@ class Process:
     def readFile(self, content_type, request_uri, request_method):
 
         if request_method == 'POST':
+            return '', Config.consts['Bad_Request'], 0, ''
+
+        if request_uri.find('../') != -1:
             return '', Config.consts['Bad_Request'], 0, ''
 
         response_status = Config.consts['OK']

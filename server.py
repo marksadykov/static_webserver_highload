@@ -20,7 +20,10 @@ def server():
         if request == '':
             continue
 
-        request_head, request_body = request.split('\n\n', 1)
+        try:
+            request_head, request_body = request.split('\n\n', 1)
+        except:
+            request_head, request_body = ['', ''], ''
 
         request_head = request_head.splitlines()
         request_headline = request_head[0]
@@ -38,7 +41,12 @@ def server():
             'Connection': 'close',
         }
 
-        response_headers['Content-Type'] = Config.mimeTypes[content_type]
+        try:
+            response_headers['Content-Type'] = Config.mimeTypes[content_type]
+        except:
+            content_type = 'txt'
+            response_headers['Content-Type'] = ''
+
         response_headers['Content-Length'] = content_length
 
         response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
@@ -50,6 +58,7 @@ def server():
         client_sock.send(response_headers_raw.encode())
         client_sock.send('\n'.encode())
 
+        print('57', content_type)
         if process_current.isDoc(content_type):
             client_sock.send(response_body_raw.encode())
             client_sock.send('\n'.encode())
