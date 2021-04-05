@@ -17,7 +17,7 @@ def server():
 
         request = parse_current.normalize_line_endings(parse_current.recv_all(client_sock))
 
-        if request == '' or request == '\n':
+        if request == '' or request == '\n' or request.find('\n\n') == -1:
             continue
 
         print('request 23 ==================')
@@ -38,6 +38,7 @@ def server():
 
         response_headers = {
             'Connection': 'close',
+            'Server': 'Mark Sadykov',
         }
 
         try:
@@ -57,13 +58,13 @@ def server():
         client_sock.send(response_headers_raw.encode())
         client_sock.send('\n'.encode())
 
-        print('57', content_type)
-        if process_current.isDoc(content_type):
-            client_sock.send(response_body_raw.encode())
-            client_sock.send('\n'.encode())
-        else:
-            client_sock.send(response_body_raw)
-            client_sock.send('\n'.encode())
+        if request_method != 'HEAD':
+            if process_current.isDoc(content_type):
+                client_sock.send(response_body_raw.encode())
+                client_sock.send('\n'.encode())
+            else:
+                client_sock.send(response_body_raw)
+                client_sock.send('\n'.encode())
 
         client_sock.close()
 

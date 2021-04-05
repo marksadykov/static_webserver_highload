@@ -72,7 +72,7 @@ class Process:
                 content_length = len(response_body_raw)
             except:
                 response_status_text = ''
-                if (request_uri[-10:] == 'index.html'):
+                if request_uri[-10:] == 'index.html':
                     response_status = Config.consts['Forbidden']
                 else:
                     response_status = Config.consts['Not_Found']
