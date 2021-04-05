@@ -1,7 +1,7 @@
 class Config:
 
     consts = {
-        'max_packet': 32768,
+        'max_packet': 65536,
         'url': '0.0.0.0',
         'port': 13000,
 

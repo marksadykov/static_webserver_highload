@@ -10,20 +10,19 @@ def server():
 
     server_sock = socket.socket()
     server_sock.bind((Config.consts['url'], Config.consts['port']))
-    server_sock.listen(1)
+    server_sock.listen(10)
 
     while True:
         client_sock, client_addr = server_sock.accept()
 
         request = parse_current.normalize_line_endings(parse_current.recv_all(client_sock))
 
-        if request == '':
+        if request == '' or request == '\n':
             continue
 
-        try:
-            request_head, request_body = request.split('\n\n', 1)
-        except:
-            request_head, request_body = ['', ''], ''
+        print('request 23 ==================')
+        print('request 24', request, '!')
+        request_head, request_body = request.split('\n\n', 1)
 
         request_head = request_head.splitlines()
         request_headline = request_head[0]

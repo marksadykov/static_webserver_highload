@@ -85,5 +85,6 @@ class Process:
             except FileNotFoundError:
                 response_status_text = ''
                 response_status = Config.consts['Not_Found']
+            content_length = len(response_body_raw)
 
         return response_body_raw, response_status, content_length, response_status_text
