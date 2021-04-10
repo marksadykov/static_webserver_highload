@@ -47,7 +47,7 @@ def server():
             content_type = 'txt'
             response_headers['Content-Type'] = ''
 
-        response_headers['content-length'] = content_length
+        response_headers['Content-length'] = content_length
 
         response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
 
@@ -60,7 +60,7 @@ def server():
 
         if request_method != 'HEAD':
             if process_current.isDoc(content_type):
-                client_sock.send(response_body_raw.encode())
+                client_sock.send(response_body_raw.encode('latin-1'))
                 client_sock.send('\r\n'.encode())
             else:
                 client_sock.send(response_body_raw)
