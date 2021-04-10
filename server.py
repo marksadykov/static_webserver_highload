@@ -47,24 +47,24 @@ def server():
             content_type = 'txt'
             response_headers['Content-Type'] = ''
 
-        response_headers['Content-Length'] = content_length
+        response_headers['content-length'] = content_length
 
-        response_headers_raw = ''.join('%s: %s\n' % (k, v) for k, v in response_headers.items())
+        response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
 
         response_proto = Config.consts['version']
 
         client_sock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-        client_sock.send('\n'.encode())
+        client_sock.send('\r\n'.encode())
         client_sock.send(response_headers_raw.encode())
-        client_sock.send('\n'.encode())
+        client_sock.send('\r\n'.encode())
 
         if request_method != 'HEAD':
             if process_current.isDoc(content_type):
                 client_sock.send(response_body_raw.encode())
-                client_sock.send('\n'.encode())
+                client_sock.send('\r\n'.encode())
             else:
                 client_sock.send(response_body_raw)
-                client_sock.send('\n'.encode())
+                client_sock.send('\r\n'.encode())
 
         client_sock.close()
 
