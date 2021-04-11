@@ -67,7 +67,7 @@ class Process:
 
             f = ''
             try:
-                f = open(request_uri[1:], "r", encoding="latin-1") # encoding="latin-1"
+                f = open(request_uri[1:], "r", encoding="latin-1")
                 response_body_raw = ''.join(f.read())
                 content_length = len(response_body_raw)
             except:

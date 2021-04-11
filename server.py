@@ -1,4 +1,6 @@
 import socket
+import logging
+import threading
 
 from config import Config
 from parse import Parse
@@ -56,6 +58,8 @@ def requestProcess(client_sock, parse_current, process_current):
             client_sock.send(response_body_raw)
             client_sock.send('\r\n'.encode())
 
+    client_sock.close()
+
 def server():
     parse_current = Parse()
     process_current = Process()
@@ -64,12 +68,14 @@ def server():
     server_sock.bind((Config.consts['url'], Config.consts['port']))
     server_sock.listen(10)
 
+    threads = list()
+
     while True:
         client_sock, client_addr = server_sock.accept()
-
-        requestProcess(client_sock, parse_current, process_current)
-
-        client_sock.close()
+        x = threading.Thread(target=requestProcess, args=(client_sock, parse_current, process_current))
+        logging.info("New thread")
+        threads.append(x)
+        x.start()
 
 if __name__ == "__main__":
     server()
