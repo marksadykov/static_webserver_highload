@@ -68,6 +68,9 @@ def server():
     server_sock.bind((Config.consts['url'], Config.consts['port']))
     server_sock.listen(10)
 
+    print('listen on', Config.consts['url'], ':' ,Config.consts['port'])
+    print('===========================')
+
     threads = list()
 
     while True:
