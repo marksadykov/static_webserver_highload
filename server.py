@@ -3,6 +3,8 @@ import logging
 import threading
 import time
 
+import os
+
 from config import Config
 from parse import Parse
 from process import ServerProcess
@@ -73,7 +75,7 @@ class Server:
 
     def writeResponse(self, clientSock, content_type, request_uri, request_method, response_headers):
 
-        if request_method == 'POST' or request_uri.find('../') != -1:
+        if request_method == 'POST' or request_uri.find('../') != -1 or request_uri == '/favicon.ico':
             response_proto = Config.consts['version']
             response_status = Config.consts['Bad_Request']
             response_headers['Content-length'] = 0
@@ -86,7 +88,7 @@ class Server:
             clientSock.send('\r\n'.encode())
             clientSock.send(response_headers_raw.encode())
             clientSock.send('\r\n'.encode())
-            clientSock.send(response_body_raw)
+            clientSock.send(response_body_raw.encode())
             return
 
         response_status = Config.consts['OK']
@@ -108,7 +110,9 @@ class Server:
                 # f = open(request_uri[1:], "r")
                 response_body_raw = ''.join(f.read())
                 f.close()
+
                 response_headers['Content-length'] = len(response_body_raw)
+                # response_headers['Content-length'] = len(f)
                 response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
                 clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
                 clientSock.send('\r\n'.encode())
@@ -117,6 +121,8 @@ class Server:
 
                 if request_method != 'HEAD':
                     clientSock.send(response_body_raw.encode("latin-1"))
+
+
             except:
                 response_status_text = ''
                 if request_uri[-10:] == 'index.html':
@@ -143,6 +149,7 @@ class Server:
                 clientSock.send('\r\n'.encode())
                 if request_method != 'HEAD':
                     clientSock.send(response_body_raw)
+
             except:
                 response_status_text = ''
                 response_status = Config.consts['Not_Found']
