@@ -60,14 +60,38 @@ class Server:
 
         content_type, request_uri = self.processCurrent.isDir(request_uri)
 
-        response_body_raw, response_status, content_length, response_status_text = self.processCurrent.readFile(content_type,
-                                                                                                            request_uri,
-                                                                                                            request_method)
-
         response_headers = {
             'Connection': 'close',
             'Server': 'Mark Sadykov',
         }
+
+        self.writeResponse(clientSock, content_type, request_uri, request_method, response_headers)
+
+        clientSock.close()
+        print('end')
+
+
+    def writeResponse(self, clientSock, content_type, request_uri, request_method, response_headers):
+
+        if request_method == 'POST' or request_uri.find('../') != -1:
+            response_proto = Config.consts['version']
+            response_status = Config.consts['Bad_Request']
+            response_headers['Content-length'] = 0
+            response_headers['Content-Type'] = ''
+            response_status_text = ''
+            response_body_raw = ''
+
+            response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+            clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+            clientSock.send('\r\n'.encode())
+            clientSock.send(response_headers_raw.encode())
+            clientSock.send('\r\n'.encode())
+            clientSock.send(response_body_raw)
+            return
+
+        response_status = Config.consts['OK']
+        response_body_raw = ''
+        response_status_text = Config.consts['OK_status']
 
         try:
             response_headers['Content-Type'] = Config.mimeTypes[content_type]
@@ -75,24 +99,58 @@ class Server:
             content_type = 'txt'
             response_headers['Content-Type'] = ''
 
-        response_headers['Content-length'] = content_length
-
-        response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-
         response_proto = Config.consts['version']
 
-        clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-        clientSock.send('\r\n'.encode())
-        clientSock.send(response_headers_raw.encode())
-        clientSock.send('\r\n'.encode())
 
-        if request_method != 'HEAD':
-            if self.processCurrent.isDoc(content_type):
-                # client_sock.send(response_body_raw.encode('latin-1'))
-                clientSock.send(response_body_raw.encode())
-            else:
+        if self.processCurrent.isDoc(content_type):
+            try:
+                f = open(request_uri[1:], "r", encoding="latin-1")
+                # f = open(request_uri[1:], "r")
+                response_body_raw = ''.join(f.read())
+                f.close()
+                response_headers['Content-length'] = len(response_body_raw)
+                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+                clientSock.send('\r\n'.encode())
+                clientSock.send(response_headers_raw.encode())
+                clientSock.send('\r\n'.encode())
+
+                if request_method != 'HEAD':
+                    clientSock.send(response_body_raw.encode("latin-1"))
+            except:
+                response_status_text = ''
+                if request_uri[-10:] == 'index.html':
+                    response_status = Config.consts['Forbidden']
+                else:
+                    response_status = Config.consts['Not_Found']
+
+                response_headers['Content-length'] = len(response_body_raw)
+                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+                clientSock.send('\r\n'.encode())
+                clientSock.send(response_headers_raw.encode())
+                clientSock.send('\r\n'.encode())
+        else:
+            try:
+                f = open(request_uri[1:], "rb")
+                response_body_raw = f.read()
+                f.close()
+                response_headers['Content-length'] = len(response_body_raw)
+                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+                clientSock.send('\r\n'.encode())
+                clientSock.send(response_headers_raw.encode())
+                clientSock.send('\r\n'.encode())
+                if request_method != 'HEAD':
+                    clientSock.send(response_body_raw)
+            except:
+                response_status_text = ''
+                response_status = Config.consts['Not_Found']
+
+                response_headers['Content-length'] = len(response_body_raw)
+                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+                clientSock.send('\r\n'.encode())
+                clientSock.send(response_headers_raw.encode())
+                clientSock.send('\r\n'.encode())
                 clientSock.send(response_body_raw)
-
-        clientSock.close()
-        print('end')
-
