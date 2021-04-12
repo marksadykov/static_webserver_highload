@@ -7,10 +7,10 @@ def count(n):
         n -= 1
 
 
-# startTime = time()
-# count(1000000000)
-# count(1000000000)
-# print('\nSequential execution time : %3.2f s.'%(time() - startTime))
+startTime = time()
+count(1000000000)
+count(1000000000)
+print('\nSequential execution time : %3.2f s.'%(time() - startTime))
 
 startTime = time()
 t1 = Thread(target=count, args=(1000000000,))
