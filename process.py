@@ -23,9 +23,6 @@ class ServerProcess:
         return request_uri
 
     def isDir(self, request_uri):
-
-        content_type = ''
-
         request_uri = self.decodeUnicode(request_uri)
 
         if request_uri.find('?') != -1:
@@ -77,8 +74,6 @@ class ServerProcess:
                 else:
                     response_status = Config.consts['Not_Found']
         else:
-            if request_uri == '/favicon.ico':
-                request_uri = '/httptest' + request_uri
             try:
                 f = open(request_uri[1:], "rb")
                 response_body_raw = f.read()

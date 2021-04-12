@@ -1,6 +1,6 @@
 from time import time
 from threading import Thread
-# from multiprocessing import Process
+from multiprocessing import Process
 
 def count(n):
     while n > 0:
@@ -21,12 +21,12 @@ t1.join()
 t2.join()
 print('\nThreaded execution time : %3.2f s.'%(time() - startTime))
 
-# startTime = time()
-# p1 = Process(target=count, args=(100000000,))
-# p2 = Process(target=count, args=(100000000,))
-# p1.start(); p2.start()
-# p1.join(); p2.join()
-# print('\nMultiprocessed execution time : %3.2f s.'%(time() - startTime))
+startTime = time()
+p1 = Process(target=count, args=(1000000000,))
+p2 = Process(target=count, args=(1000000000,))
+p1.start(); p2.start()
+p1.join(); p2.join()
+print('\nMultiprocessed execution time : %3.2f s.'%(time() - startTime))
 
 # import time
 # from threading import Thread
