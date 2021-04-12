@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 
-import os
+import os, sys
 
 from config import Config
 from parse import Parse
