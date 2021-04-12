@@ -3,7 +3,7 @@ import re
 from config import Config
 
 
-class Process:
+class ServerProcess:
     def find_all(self, string, target):
         indexes = [i for i in range(len(string)) if string.startswith(target, i)]
         return max(indexes)
@@ -64,11 +64,11 @@ class Process:
         response_status_text = Config.consts['OK_status']
 
         if self.isDoc(content_type):
-
-            f = ''
             try:
-                f = open(request_uri[1:], "r", encoding="latin-1")
+                # f = open(request_uri[1:], "r", encoding="latin-1")
+                f = open(request_uri[1:], "r")
                 response_body_raw = ''.join(f.read())
+                f.close()
                 content_length = len(response_body_raw)
             except:
                 response_status_text = ''
@@ -82,7 +82,8 @@ class Process:
             try:
                 f = open(request_uri[1:], "rb")
                 response_body_raw = f.read()
-            except FileNotFoundError:
+                f.close()
+            except:
                 response_status_text = ''
                 response_status = Config.consts['Not_Found']
             content_length = len(response_body_raw)
