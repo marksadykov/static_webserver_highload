@@ -72,6 +72,13 @@ class Server:
         clientSock.close()
         print('end')
 
+    def writeHeaders(self, clientSock, response_headers, response_body_raw, response_proto, response_status, response_status_text):
+        response_headers['Content-length'] = len(response_body_raw)
+        response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
+        clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+        clientSock.send('\r\n'.encode())
+        clientSock.send(response_headers_raw.encode())
+        clientSock.send('\r\n'.encode())
 
     def writeResponse(self, clientSock, content_type, request_uri, request_method, response_headers):
 
@@ -111,13 +118,8 @@ class Server:
                 response_body_raw = ''.join(f.read())
                 f.close()
 
-                response_headers['Content-length'] = len(response_body_raw)
-                # response_headers['Content-length'] = len(f)
-                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-                clientSock.send('\r\n'.encode())
-                clientSock.send(response_headers_raw.encode())
-                clientSock.send('\r\n'.encode())
+                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
+                             response_status_text)
 
                 if request_method != 'HEAD':
                     clientSock.send(response_body_raw.encode("latin-1"))
@@ -130,34 +132,20 @@ class Server:
                 else:
                     response_status = Config.consts['Not_Found']
 
-                response_headers['Content-length'] = len(response_body_raw)
-                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-                clientSock.send('\r\n'.encode())
-                clientSock.send(response_headers_raw.encode())
-                clientSock.send('\r\n'.encode())
+                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
+                                  response_status_text)
         else:
             try:
                 f = open(request_uri[1:], "rb")
                 response_body_raw = f.read()
                 f.close()
-                response_headers['Content-length'] = len(response_body_raw)
-                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-                clientSock.send('\r\n'.encode())
-                clientSock.send(response_headers_raw.encode())
-                clientSock.send('\r\n'.encode())
+                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
+                                  response_status_text)
                 if request_method != 'HEAD':
                     clientSock.send(response_body_raw)
 
             except:
                 response_status_text = ''
                 response_status = Config.consts['Not_Found']
-
-                response_headers['Content-length'] = len(response_body_raw)
-                response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-                clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
-                clientSock.send('\r\n'.encode())
-                clientSock.send(response_headers_raw.encode())
-                clientSock.send('\r\n'.encode())
-                clientSock.send(response_body_raw)
+                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
+                                  response_status_text)
