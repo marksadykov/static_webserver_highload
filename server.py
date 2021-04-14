@@ -114,10 +114,7 @@ class Server:
         if self.processCurrent.isDoc(content_type):
             try:
                 f = open(request_uri[1:], "r", encoding="latin-1")
-                # f = open(request_uri[1:], "r")
-                # fd = os.open(request_uri[1:], os.O_RDONLY)
                 response_body_raw = ''.join(f.read())
-                # response_body_raw = ''
                 f.close()
 
                 self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
@@ -125,14 +122,6 @@ class Server:
 
                 if request_method != 'HEAD':
                     clientSock.send(response_body_raw.encode("latin-1"))
-                    # print('127', os.read(fd, 1000000).decode())
-                    # os.close(fd)
-                    # try:
-                    #     # clientSock.send(os.read(fd, 1000000))
-                    #     clientSock.send('help'.encode())
-                    # except:
-                    #     print('fuck')
-
 
             except:
                 response_status_text = ''
@@ -145,20 +134,15 @@ class Server:
                                   response_status_text)
         else:
             try:
-                # f = open(request_uri[1:], "rb")
-                # response_body_raw = f.read()
-                # f.close()
-
-                fd = os.open(request_uri[1:], os.O_RDONLY)
+                f = open(request_uri[1:], "rb")
+                response_body_raw = f.read()
+                f.close()
 
                 self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
                                   response_status_text)
+
                 if request_method != 'HEAD':
-                    # clientSock.send(response_body_raw)
-                    buf = os.read(fd, 1000)
-                    print(buf)
-                    clientSock.send(buf.encode())
-                    os.close(fd)
+                    clientSock.send(response_body_raw)
 
             except:
                 response_status_text = ''
