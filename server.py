@@ -12,7 +12,7 @@ from process import ServerProcess
 class Server:
     def __init__(self):
         # self.cpuCount = os.cpu_count()
-        self.cpuCount = 8
+        self.cpuCount = 16
         self.parseCurrent = Parse()
         self.processCurrent = ServerProcess()
 
@@ -38,20 +38,18 @@ class Server:
         while True:
             if numThred[0] < self.cpuCount and len(queue) > 0:
                 current = queue.pop()
-                current.start()
+                x = threading.Thread(target=self.requestHandler, args=(current, numThred))
+                x.start()
 
             try:
                 clientSock, clientAddr = self.serverSock.accept()
                 print('Connected to: ' + clientAddr[0] + ':' + str(clientAddr[1]))
-                x = threading.Thread(target=self.requestHandler, args=(clientSock, numThred))
-                # x = threading.Thread(target=self.requestHandler, args=(clientSock,))
-                x.start()
-
                 if numThred[0] < self.cpuCount:
+                    x = threading.Thread(target=self.requestHandler, args=(clientSock, numThred))
                     x.start()
                     numThred[0] += 1
                 else:
-                    queue.append(x)
+                    queue.append(clientSock)
 
             except:
                 pass
