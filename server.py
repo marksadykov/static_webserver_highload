@@ -11,6 +11,8 @@ from process import ServerProcess
 
 class Server:
     def __init__(self):
+        # self.cpuCount = os.cpu_count()
+        self.cpuCount = 8
         self.parseCurrent = Parse()
         self.processCurrent = ServerProcess()
 
@@ -31,20 +33,29 @@ class Server:
         print('===========================')
 
     def polling(self):
-        threadCount = 0
+        numThred = [0]
+        queue = []
         while True:
+            if numThred[0] < self.cpuCount and len(queue) > 0:
+                current = queue.pop()
+                current.start()
+
             try:
                 clientSock, clientAddr = self.serverSock.accept()
                 print('Connected to: ' + clientAddr[0] + ':' + str(clientAddr[1]))
-                x = threading.Thread(target=self.requestHandler, args=(clientSock,))
-                x.start()
-                # print('start', threadCount)
-                # threadCount += 1
+                x = threading.Thread(target=self.requestHandler, args=(clientSock, numThred))
+
+                if numThred[0] < self.cpuCount:
+                    x.start()
+                    numThred[0] += 1
+                else:
+                    queue.append(x)
+
             except:
                 pass
 
 
-    def requestHandler(self, clientSock):
+    def requestHandler(self, clientSock, numThred):
 
         request = self.parseCurrent.normalize_line_endings(self.parseCurrent.recv_all(clientSock))
 
@@ -70,7 +81,7 @@ class Server:
         self.writeResponse(clientSock, content_type, request_uri, request_method, response_headers)
 
         clientSock.close()
-        # print('end')
+        numThred[0] -= 1
 
     def writeHeaders(self, clientSock, response_headers, response_body_raw, response_proto, response_status, response_status_text):
         response_headers['Content-length'] = len(response_body_raw)
