@@ -44,6 +44,8 @@ class Server:
                 clientSock, clientAddr = self.serverSock.accept()
                 print('Connected to: ' + clientAddr[0] + ':' + str(clientAddr[1]))
                 x = threading.Thread(target=self.requestHandler, args=(clientSock, numThred))
+                # x = threading.Thread(target=self.requestHandler, args=(clientSock,))
+                x.start()
 
                 if numThred[0] < self.cpuCount:
                     x.start()
@@ -124,7 +126,8 @@ class Server:
 
         if self.processCurrent.isDoc(content_type):
             try:
-                f = open(request_uri[1:], "r", encoding="latin-1")
+                # f = open(request_uri[1:], "r", encoding="latin-1")
+                f = open(request_uri[1:], "r")
                 response_body_raw = ''.join(f.read())
                 f.close()
 
