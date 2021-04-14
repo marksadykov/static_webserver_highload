@@ -12,7 +12,7 @@ from process import ServerProcess
 class Server:
     def __init__(self):
         # self.cpuCount = os.cpu_count()
-        self.cpuCount = 16
+        self.cpuCount = 8
         self.parseCurrent = Parse()
         self.processCurrent = ServerProcess()
 
@@ -26,7 +26,7 @@ class Server:
             self.serverSock.close()
             print(err)
 
-        self.serverSock.listen(1)
+        self.serverSock.listen(100)
         self.serverSock.setblocking(False)
 
         print('listen on', Config.consts['url'], ':', Config.consts['port'])
@@ -124,8 +124,7 @@ class Server:
 
         if self.processCurrent.isDoc(content_type):
             try:
-                # f = open(request_uri[1:], "r", encoding="latin-1")
-                f = open(request_uri[1:], "r")
+                f = open(request_uri[1:], "r", encoding="latin-1")
                 response_body_raw = ''.join(f.read())
                 f.close()
 
