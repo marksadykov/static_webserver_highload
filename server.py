@@ -13,6 +13,7 @@ class Server:
     def __init__(self):
         # self.cpuCount = os.cpu_count()
         self.cpuCount = 8
+        self.numThread = 0
         self.parseCurrent = Parse()
         self.processCurrent = ServerProcess()
 
@@ -26,36 +27,35 @@ class Server:
             self.serverSock.close()
             print(err)
 
-        self.serverSock.listen(100)
+        self.serverSock.listen(1)
         self.serverSock.setblocking(False)
 
-        print('listen on', Config.consts['url'], ':', Config.consts['port'])
+        print('listen on ' + str(Config.consts['url']) + ':' + str(Config.consts['port']))
         print('===========================')
 
     def polling(self):
-        numThred = [0]
         queue = []
         while True:
-            if numThred[0] < self.cpuCount and len(queue) > 0:
+            print(self.numThread)
+            if self.numThread < self.cpuCount and len(queue) > 0:
                 current = queue.pop()
-                x = threading.Thread(target=self.requestHandler, args=(current, numThred))
-                x.start()
-
+                self.numThread = self.numThread + 1
+                current.start()
             try:
                 clientSock, clientAddr = self.serverSock.accept()
-                print('Connected to: ' + clientAddr[0] + ':' + str(clientAddr[1]))
-                if numThred[0] < self.cpuCount:
-                    x = threading.Thread(target=self.requestHandler, args=(clientSock, numThred))
+                print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
+                x = threading.Thread(target=self.requestHandler, args=(clientSock, ))
+                if self.numThread < self.cpuCount:
+                    self.numThread = self.numThread + 1
                     x.start()
-                    numThred[0] += 1
                 else:
-                    queue.append(clientSock)
+                    queue.append(x)
 
             except:
                 pass
 
 
-    def requestHandler(self, clientSock, numThred):
+    def requestHandler(self, clientSock):
 
         request = self.parseCurrent.normalize_line_endings(self.parseCurrent.recv_all(clientSock))
 
@@ -81,7 +81,7 @@ class Server:
         self.writeResponse(clientSock, content_type, request_uri, request_method, response_headers)
 
         clientSock.close()
-        numThred[0] -= 1
+        self.numThread = self.numThread - 1
 
     def writeHeaders(self, clientSock, response_headers, response_body_raw, response_proto, response_status, response_status_text):
         response_headers['Content-length'] = len(response_body_raw)

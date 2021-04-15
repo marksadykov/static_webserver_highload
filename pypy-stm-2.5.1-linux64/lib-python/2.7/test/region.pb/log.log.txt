@@ -1,0 +1,24 @@
+Enabled messages [UnixVersion()] 32  info: Informational messages (enabled by default)
+[0] Pinball basename: /home/arigo/hg/pypy/stmgc-c7/lib-python/2.7/test/region.pb/log
+Loading /home/arigo/hg/pypy/stmgc-c7/64compiled/c-r76543-stm-jit/pypy-c(0x000400000:0x00c863a17)
+Loading /lib64/ld-linux-x86-64.so.2(0x7fa3bd88a000:0x7fa3bdaae2c7)
+[0] Started logging thread OSPid: 8789 OSTid: 8789
+Replacing AT_SYSINFO_EHDR
+	 from AT_SYSINFO_EHDR, 0x7fff73bfd000
+	 to AT_IGNORE,0
+Loading /lib/x86_64-linux-gnu/libdl.so.2(0x7fa3a9064000:0x7fa3a9267107)
+Loading /lib/x86_64-linux-gnu/libbz2.so.1.0(0x7fa3a8e44000:0x7fa3a9053d8f)
+Loading /lib/x86_64-linux-gnu/libm.so.6(0x7fa3a8b27000:0x7fa3a8e22127)
+Loading /lib/x86_64-linux-gnu/libz.so.1(0x7fa3a8910000:0x7fa3a8b2622f)
+Loading /lib/x86_64-linux-gnu/libssl.so.1.0.0(0x7fa3a86b2000:0x7fa3a890f10f)
+Loading /lib/x86_64-linux-gnu/libcrypto.so.1.0.0(0x7fa3a82d7000:0x7fa3a86b19b7)
+Loading /lib/x86_64-linux-gnu/libexpat.so.1(0x7fa3a80ad000:0x7fa3a82d606f)
+Loading /lib/x86_64-linux-gnu/libcrypt.so.1(0x7fa3a7e74000:0x7fa3a80ac1ff)
+Loading /lib/x86_64-linux-gnu/librt.so.1(0x7fa3a7c6c000:0x7fa3a7e73c57)
+Loading /usr/lib/x86_64-linux-gnu/libffi.so.6(0x7fa3a7a64000:0x7fa3a7c6b59f)
+Loading /lib/x86_64-linux-gnu/libutil.so.1(0x7fa3a7861000:0x7fa3a7a630ff)
+Loading /lib/x86_64-linux-gnu/libncurses.so.5(0x7fa3a7640000:0x7fa3a78604bf)
+Loading /lib/x86_64-linux-gnu/libtinfo.so.5(0x7fa3a7419000:0x7fa3a763fc3f)
+Loading /lib/x86_64-linux-gnu/libpthread.so.0(0x7fa3a71fc000:0x7fa3a7418427)
+Loading /lib/x86_64-linux-gnu/libc.so.6(0x7fa3a6e3d000:0x7fa3a71fb4b7)
+[0] ThreadFini: logger thread at 0x7fa3a6f30cd5

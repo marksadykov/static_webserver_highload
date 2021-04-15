@@ -1,0 +1,3 @@
+target remote :53341
+set remotetimeout 30000
+source /tmp/pinplay-drdebug-2.1-pin-2.14-71313-gcc.4.4.7-linux//extras/pinplay/scripts/pin.py
