@@ -36,7 +36,6 @@ class Server:
     def polling(self):
         queue = []
         while True:
-            print(self.numThread)
             if self.numThread < self.cpuCount and len(queue) > 0:
                 current = queue.pop()
                 self.numThread = self.numThread + 1
