@@ -38,7 +38,6 @@ class Server:
         while True:
             if self.numThread < self.cpuCount and len(queue) > 0:
                 current = queue.pop()
-                self.numThread = self.numThread + 1
                 current.start()
             try:
                 clientSock, clientAddr = self.serverSock.accept()
@@ -68,7 +67,7 @@ class Server:
 
         request_method, request_uri, request_proto = request_headline.split(' ', 3)
 
-        # print('request URL:', request_uri)
+        print('request URL:', request_uri)
 
         content_type, request_uri = self.processCurrent.isDir(request_uri)
 
