@@ -1,5 +1,6 @@
 import logging
 import os
+import queue
 import re
 import socket
 import sys
@@ -17,7 +18,7 @@ class Server:
         self.cpuCount = 8
         self.numThread = 0
         self.config = Config()
-
+        self.queue = queue.Queue()
         self.serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -81,28 +82,30 @@ class Server:
         print('=============================')
 
     def polling(self):
-        queue = []
         while True:
-            if self.numThread < self.cpuCount and len(queue) > 0:
-                current = queue.pop()
-                current.start()
+            print('thread num', self.numThread)
+
+            if self.numThread < self.cpuCount and (not self.queue.empty()):
+                currentThread = self.queue.get()
+                self.numThread += 1
+                currentThread.start()
+
             try:
                 clientSock, clientAddr = self.serverSock.accept()
-                print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
+                # print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
                 x = threading.Thread(target=self.requestHandler, args=(clientSock,))
                 if self.numThread < self.cpuCount:
-                    self.numThread = self.numThread + 1
+                    self.numThread += 1
                     x.start()
                 else:
-                    queue.append(x)
+                    print('was pushed')
+                    self.queue.put(x)
 
             except:
                 pass
 
     def requestHandler(self, clientSock):
-
         request = normalizeLineEndings(self.decodeReceive(clientSock))
-
         if request == '' or request == '\n' or request.find('\n\n') == -1:
             return
 
@@ -110,16 +113,13 @@ class Server:
         requestHead = requestHead.splitlines()
         requestHeadline = requestHead[0]
         requestMethod, requestUri, requestProto = requestHeadline.split(' ', 3)
-
-        print('request URL:', requestUri)
+        # print('request URL:', requestUri)
         contentType, requestUri = self.isDir(requestUri)
-
         responseHeaders = self.config.responseHeaders
-
         self.writeResponse(clientSock, contentType, requestUri, requestMethod, responseHeaders)
 
         clientSock.close()
-        self.numThread = self.numThread - 1
+        self.numThread -= 1
 
     def writeHeaders(self, clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
                      responseStatusText):
