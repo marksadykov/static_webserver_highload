@@ -1,9 +1,8 @@
 class Config:
-
     consts = {
         'max_packet': 65536,
         'url': '0.0.0.0',
-        'port': 3001,
+        'port': 3002,
 
         'OK': '200',
         'Forbidden': '403',
@@ -30,4 +29,14 @@ class Config:
         'woff2': 'font/woff2',
         'swf': 'application/x-shockwave-flash',
         'txt': 'text/plain',
+    }
+
+    docTypes = ['html', 'css', 'js', 'txt']
+
+    indexPath = 'html'
+    indexFile = '/index.html'
+
+    responseHeaders = {
+        'Connection': 'close',
+        'Server': 'Mark Sadykov',
     }

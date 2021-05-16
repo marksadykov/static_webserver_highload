@@ -1,28 +1,75 @@
-import socket
 import logging
+import os
+import re
+import socket
+import sys
 import threading
 import time
 
-import os, sys
-
 from config import Config
-from parse import Parse
-from process import ServerProcess
+from utils.normalizeLineEndings import normalizeLineEndings
+from utils.findAllOccurrences import findAllOccurrences
+
 
 class Server:
     def __init__(self):
         # self.cpuCount = os.cpu_count()
         self.cpuCount = 8
         self.numThread = 0
-        self.parseCurrent = Parse()
-        self.processCurrent = ServerProcess()
+        self.config = Config()
 
         self.serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+    def decodeReceive(self, socket):
+        return socket.recv(self.config.consts['max_packet']).decode("utf-8")
+
+    def isDoc(self, contentType):
+        if contentType in self.config.docTypes:
+            return True
+
+        return False
+
+    def decodeUnicode(self, request_uri):
+        result = re.findall(r'%..', request_uri)
+        for item in result:
+            change = int(('0x' + item[1:]), 16)
+            request_uri = request_uri.replace(item, chr(change))
+
+        return request_uri
+
+    def normalizePath(self, requestUri):
+        if requestUri.find('?') != -1:
+            findSymbol = requestUri.find('?')
+            return requestUri[:findSymbol]
+
+        return requestUri
+
+    def isDir(self, requestUri):
+        requestUri = self.decodeUnicode(requestUri)
+        requestUri = self.normalizePath(requestUri)
+
+        if requestUri[-1:] == '/' and requestUri.find('.') != -1:
+            contentType = self.config.indexPath
+            return contentType, requestUri
+
+        if requestUri[-1:] == '/' and requestUri.find('.') == -1:
+            requestUri = requestUri[0:-1]
+
+        checkFileOrDir = requestUri.find('.')
+        if checkFileOrDir == -1:
+            contentType = self.config.indexPath
+            requestUri += self.config.indexFile
+
+        else:
+            dotIndex = findAllOccurrences(requestUri, '.') + 1
+            contentType = requestUri[dotIndex:]
+
+        return contentType, requestUri
+
     def listener(self):
         try:
-            self.serverSock.bind((Config.consts['url'], Config.consts['port']))
+            self.serverSock.bind((self.config.consts['url'], self.config.consts['port']))
         except socket.error as err:
             self.serverSock.close()
             print(err)
@@ -30,8 +77,8 @@ class Server:
         self.serverSock.listen(1)
         self.serverSock.setblocking(False)
 
-        print('listen on ' + str(Config.consts['url']) + ':' + str(Config.consts['port']))
-        print('===========================')
+        print('listen on ' + str(self.config.consts['url']) + ':' + str(self.config.consts['port']))
+        print('=============================')
 
     def polling(self):
         queue = []
@@ -42,7 +89,7 @@ class Server:
             try:
                 clientSock, clientAddr = self.serverSock.accept()
                 print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
-                x = threading.Thread(target=self.requestHandler, args=(clientSock, ))
+                x = threading.Thread(target=self.requestHandler, args=(clientSock,))
                 if self.numThread < self.cpuCount:
                     self.numThread = self.numThread + 1
                     x.start()
@@ -52,109 +99,106 @@ class Server:
             except:
                 pass
 
-
     def requestHandler(self, clientSock):
 
-        request = self.parseCurrent.normalize_line_endings(self.parseCurrent.recv_all(clientSock))
+        request = normalizeLineEndings(self.decodeReceive(clientSock))
 
         if request == '' or request == '\n' or request.find('\n\n') == -1:
             return
 
-        request_head, request_body = request.split('\n\n', 1)
+        requestHead, _ = request.split('\n\n', 1)
+        requestHead = requestHead.splitlines()
+        requestHeadline = requestHead[0]
+        requestMethod, requestUri, requestProto = requestHeadline.split(' ', 3)
 
-        request_head = request_head.splitlines()
-        request_headline = request_head[0]
+        print('request URL:', requestUri)
+        contentType, requestUri = self.isDir(requestUri)
 
-        request_method, request_uri, request_proto = request_headline.split(' ', 3)
+        responseHeaders = self.config.responseHeaders
 
-        print('request URL:', request_uri)
-
-        content_type, request_uri = self.processCurrent.isDir(request_uri)
-
-        response_headers = {
-            'Connection': 'close',
-            'Server': 'Mark Sadykov',
-        }
-
-        self.writeResponse(clientSock, content_type, request_uri, request_method, response_headers)
+        self.writeResponse(clientSock, contentType, requestUri, requestMethod, responseHeaders)
 
         clientSock.close()
         self.numThread = self.numThread - 1
 
-    def writeHeaders(self, clientSock, response_headers, response_body_raw, response_proto, response_status, response_status_text):
-        response_headers['Content-length'] = len(response_body_raw)
-        response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-        clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+    def writeHeaders(self, clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                     responseStatusText):
+        responseHeaders['Content-length'] = len(responseBodyRaw)
+        responseHeadersRaw = ''.join('%s: %s\r\n' % (k, v) for k, v in responseHeaders.items())
+        clientSock.send(('%s %s %s' % (responseProto, responseStatus, responseStatusText)).encode())
         clientSock.send('\r\n'.encode())
-        clientSock.send(response_headers_raw.encode())
+        clientSock.send(responseHeadersRaw.encode())
         clientSock.send('\r\n'.encode())
 
-    def writeResponse(self, clientSock, content_type, request_uri, request_method, response_headers):
+    def writeResponse(self, clientSock, contentType, requestUri, requestMethod, responseHeaders):
 
-        if request_method == 'POST' or request_uri.find('../') != -1 or request_uri == '/favicon.ico':
-            response_proto = Config.consts['version']
-            response_status = Config.consts['Bad_Request']
-            response_headers['Content-length'] = 0
-            response_headers['Content-Type'] = ''
-            response_status_text = ''
-            response_body_raw = ''
+        if requestMethod == 'POST' or requestUri.find('../') != -1 or requestUri == '/favicon.ico':
+            responseProto = Config.consts['version']
+            responseStatus = Config.consts['Bad_Request']
+            responseHeaders['Content-length'] = 0
+            responseHeaders['Content-Type'] = ''
+            responseStatusText = ''
+            responseBodyRaw = ''
 
-            response_headers_raw = ''.join('%s: %s\r\n' % (k, v) for k, v in response_headers.items())
-            clientSock.send(('%s %s %s' % (response_proto, response_status, response_status_text)).encode())
+            responseHeadersRaw = ''.join('%s: %s\r\n' % (k, v) for k, v in responseHeaders.items())
+            clientSock.send(('%s %s %s' % (responseProto, responseStatus, responseStatusText)).encode())
             clientSock.send('\r\n'.encode())
-            clientSock.send(response_headers_raw.encode())
+            clientSock.send(responseHeadersRaw.encode())
             clientSock.send('\r\n'.encode())
-            clientSock.send(response_body_raw.encode())
+            clientSock.send(responseBodyRaw.encode())
             return
 
-        response_status = Config.consts['OK']
-        response_body_raw = ''
-        response_status_text = Config.consts['OK_status']
+        responseStatus = Config.consts['OK']
+        responseBodyRaw = ''
+        responseStatusText = Config.consts['OK_status']
 
         try:
-            response_headers['Content-Type'] = Config.mimeTypes[content_type]
+            responseHeaders['Content-Type'] = Config.mimeTypes[contentType]
         except:
-            content_type = 'txt'
-            response_headers['Content-Type'] = ''
+            contentType = 'txt'
+            responseHeaders['Content-Type'] = ''
 
-        response_proto = Config.consts['version']
+        responseProto = Config.consts['version']
 
-
-        if self.processCurrent.isDoc(content_type):
+        if self.isDoc(contentType):
             try:
-                f = open(request_uri[1:], "r", encoding="latin-1")
-                response_body_raw = ''.join(f.read())
+                f = open(requestUri[1:], "r", encoding="latin-1")
+                responseBodyRaw = ''.join(f.read())
                 f.close()
 
-                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
-                             response_status_text)
+                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                                  responseStatusText)
 
-                if request_method != 'HEAD':
-                    clientSock.send(response_body_raw.encode("latin-1"))
+                if requestMethod != 'HEAD':
+                    clientSock.send(responseBodyRaw.encode("latin-1"))
 
             except:
-                response_status_text = ''
-                if request_uri[-10:] == 'index.html':
-                    response_status = Config.consts['Forbidden']
+                responseStatusText = ''
+                if requestUri[-10:] == 'index.html':
+                    responseStatus = Config.consts['Forbidden']
                 else:
-                    response_status = Config.consts['Not_Found']
+                    responseStatus = Config.consts['Not_Found']
 
-                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
-                                  response_status_text)
+                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                                  responseStatusText)
         else:
             try:
-                f = open(request_uri[1:], "rb")
-                response_body_raw = f.read()
+                f = open(requestUri[1:], "rb")
+                responseBodyRaw = f.read()
                 f.close()
 
-                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
-                                  response_status_text)
+                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                                  responseStatusText)
 
-                if request_method != 'HEAD':
-                    clientSock.send(response_body_raw)
+                if requestMethod != 'HEAD':
+                    clientSock.send(responseBodyRaw)
 
             except:
-                response_status_text = ''
-                response_status = Config.consts['Not_Found']
-                self.writeHeaders(clientSock, response_headers, response_body_raw, response_proto, response_status,
-                                  response_status_text)
+                responseStatusText = ''
+                responseStatus = Config.consts['Not_Found']
+                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                                  responseStatusText)
+
+    def server(self):
+        self.listener()
+        self.polling()
