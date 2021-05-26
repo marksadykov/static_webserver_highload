@@ -1,11 +1,7 @@
-import logging
-import os
 import queue
 import re
 import socket
-import sys
 import threading
-import time
 
 from config import Config
 from utils.normalizeLineEndings import normalizeLineEndings
@@ -87,7 +83,7 @@ class Server:
 
             if self.numThread < self.cpuCount and (not self.queue.empty()):
                 currentThread = self.queue.get()
-                self.numThread += 1
+                # self.numThread += 1
                 currentThread.start()
 
             try:
@@ -95,7 +91,7 @@ class Server:
                 # print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
                 x = threading.Thread(target=self.requestHandler, args=(clientSock,))
                 if self.numThread < self.cpuCount:
-                    self.numThread += 1
+                    # self.numThread += 1
                     x.start()
                 else:
                     print('was pushed')
@@ -105,8 +101,10 @@ class Server:
                 pass
 
     def requestHandler(self, clientSock):
+        self.numThread += 1
         request = normalizeLineEndings(self.decodeReceive(clientSock))
         if request == '' or request == '\n' or request.find('\n\n') == -1:
+            self.numThread -= 1
             return
 
         requestHead, _ = request.split('\n\n', 1)
