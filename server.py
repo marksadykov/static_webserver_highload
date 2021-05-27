@@ -79,19 +79,15 @@ class Server:
 
     def polling(self):
         while True:
-            print('thread num', self.numThread)
-
             if self.numThread < self.cpuCount and (not self.queue.empty()):
                 currentThread = self.queue.get()
-                # self.numThread += 1
                 currentThread.start()
 
             try:
                 clientSock, clientAddr = self.serverSock.accept()
-                # print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
+                print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
                 x = threading.Thread(target=self.requestHandler, args=(clientSock,))
                 if self.numThread < self.cpuCount:
-                    # self.numThread += 1
                     x.start()
                 else:
                     print('was pushed')
@@ -111,7 +107,7 @@ class Server:
         requestHead = requestHead.splitlines()
         requestHeadline = requestHead[0]
         requestMethod, requestUri, requestProto = requestHeadline.split(' ', 3)
-        # print('request URL:', requestUri)
+        print('request URL:', requestUri)
         contentType, requestUri = self.isDir(requestUri)
         responseHeaders = self.config.responseHeaders
         self.writeResponse(clientSock, contentType, requestUri, requestMethod, responseHeaders)
