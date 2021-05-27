@@ -1,8 +1,6 @@
-import queue
 import re
 import socket
 import threading
-import os
 
 from config import Config
 from utils.normalizeLineEndings import normalizeLineEndings
@@ -11,10 +9,11 @@ from utils.findAllOccurrences import findAllOccurrences
 
 class Server:
     def __init__(self):
-        self.cpuCount = os.cpu_count()
+        # self.cpuCount = os.cpu_count()
+        self.cpuCount = 8
         self.numThread = 0
         self.config = Config()
-        self.queue = queue.Queue()
+        self.queue = []
         self.serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -79,8 +78,8 @@ class Server:
 
     def polling(self):
         while True:
-            if self.numThread < self.cpuCount and (not self.queue.empty()):
-                currentThread = self.queue.get()
+            if self.numThread < self.cpuCount and (len(self.queue) > 0):
+                currentThread = self.queue[0]
                 currentThread.start()
 
             try:
@@ -90,7 +89,7 @@ class Server:
                 if self.numThread < self.cpuCount:
                     x.start()
                 else:
-                    self.queue.put(x)
+                    self.queue.append(x)
 
             except:
                 pass
