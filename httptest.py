@@ -7,7 +7,7 @@ from http import client as httplib
 import unittest
 
 arg_host = "0.0.0.0"
-arg_port = 3002
+arg_port = 3004
 if len(sys.argv) > 1:
   arg_host = sys.argv[1]
 if len(sys.argv) > 2:

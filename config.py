@@ -1,8 +1,8 @@
 class Config:
     consts = {
-        'max_packet': 65536,
+        'max_packet': 1024,
         'url': '0.0.0.0',
-        'port': 3002,
+        'port': 3004,
 
         'OK': '200',
         'Forbidden': '403',
@@ -35,6 +35,9 @@ class Config:
 
     indexPath = 'html'
     indexFile = '/index.html'
+
+    thread_count = 64
+    cpu_limit = 4
 
     responseHeaders = {
         'Connection': 'close',
