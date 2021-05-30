@@ -1,4 +1,3 @@
-import queue
 import re
 import socket
 import threading
@@ -12,11 +11,7 @@ from utils.findAllOccurrences import findAllOccurrences
 
 class Server:
     def __init__(self):
-        # self.cpuCount = os.cpu_count()
-        self.cpuCount = 8
-        self.numThread = 0
         self.config = Config()
-        self.queue = queue.Queue()
         self.serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -74,12 +69,11 @@ class Server:
             print(err)
 
         self.serverSock.listen(8)
-        # self.serverSock.setblocking(False)
 
         print('listen on ' + str(self.config.consts['url']) + ':' + str(self.config.consts['port']))
         print('=============================')
 
-    def do(self, serverSock, config, initThreads, runWorker, requestHandler):
+    def start(self, serverSock, config, initThreads, runWorker, requestHandler):
         process_pool = []
 
         for index in range(config.cpu_limit):
@@ -94,7 +88,6 @@ class Server:
         except KeyboardInterrupt:
             for process in process_pool:
                 process.terminate()
-                print('Terminate')
 
     def initThreads(self, serverSock, config, runWorker, requestHandler):
         thread_pool = []
@@ -104,7 +97,6 @@ class Server:
             thread.start()
 
         for thread in thread_pool:
-            print('Join thread')
             thread.join()
 
     def runWorker(self, serverSock, config, requestHandler):
@@ -113,32 +105,13 @@ class Server:
             try:
                 requestHandler(conn, config)
             except Exception as e:
-                print('exception while reading', e)
+                print('exception socket', e)
             finally:
                 conn.close()
-
-    # def polling(self):
-    #     while True:
-    #         if self.numThread < self.cpuCount and (not self.queue.empty()):
-    #             currentThread = self.queue.get()
-    #             currentThread.start()
-    #
-    #         try:
-    #             clientSock, clientAddr = self.serverSock.accept()
-    #             print('Connected to: ' + str(clientAddr[0]) + ':' + str(clientAddr[1]))
-    #             x = threading.Thread(target=self.requestHandler, args=(clientSock,))
-    #             if self.numThread < self.cpuCount:
-    #                 x.start()
-    #             else:
-    #                 self.queue.put(x)
-    #
-    #         except:
-    #             pass
 
     def requestHandler(self, clientSock, config):
         request = normalizeLineEndings(self.decodeReceive(clientSock))
         if request == '' or request == '\n' or request.find('\n\n') == -1:
-            self.numThread -= 1
             return
 
         requestHead, _ = request.split('\n\n', 1)
@@ -149,8 +122,6 @@ class Server:
         contentType, requestUri = self.isDir(requestUri)
         responseHeaders = config.responseHeaders
         self.writeResponse(clientSock, contentType, requestUri, requestMethod, responseHeaders)
-
-        # clientSock.close()
 
     def writeHeaders(self, clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
                      responseStatusText):
@@ -191,44 +162,29 @@ class Server:
 
         responseProto = Config.consts['version']
 
-        if self.isDoc(contentType):
-            try:
+        try:
+            self.writeHeaders(clientSock, responseHeaders, os.path.getsize(requestUri[1:]), responseProto,
+                              responseStatus,
+                              responseStatusText)
 
-                self.writeHeaders(clientSock, responseHeaders, os.path.getsize(requestUri[1:]), responseProto, responseStatus,
-                                  responseStatusText)
+            if requestMethod == 'HEAD':
+                return
 
-                with open(requestUri[1:], 'rb') as file:
-                    clientSock.sendfile(file)
+            with open(requestUri[1:], 'rb') as file:
+                clientSock.sendfile(file)
 
-                if requestMethod != 'HEAD':
-                    clientSock.send(responseBodyRaw.encode("latin-1"))
 
-            except:
-                responseStatusText = ''
-                if requestUri[-10:] == 'index.html':
-                    responseStatus = Config.consts['Forbidden']
-                else:
-                    responseStatus = Config.consts['Not_Found']
 
-                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
-                                  responseStatusText)
-        else:
-            try:
-                self.writeHeaders(clientSock, responseHeaders, os.path.getsize(requestUri[1:]), responseProto, responseStatus,
-                                  responseStatusText)
-
-                with open(requestUri[1:], 'rb') as file:
-                    clientSock.sendfile(file)
-
-                if requestMethod != 'HEAD':
-                    clientSock.send(responseBodyRaw)
-
-            except:
-                responseStatusText = ''
+        except:
+            responseStatusText = ''
+            if requestUri[-10:] == 'index.html':
+                responseStatus = Config.consts['Forbidden']
+            else:
                 responseStatus = Config.consts['Not_Found']
-                self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
-                                  responseStatusText)
+
+            self.writeHeaders(clientSock, responseHeaders, responseBodyRaw, responseProto, responseStatus,
+                              responseStatusText)
 
     def server(self):
         self.listener()
-        self.do(self.serverSock, self.config, self.initThreads, self.runWorker, self.requestHandler)
+        self.start(self.serverSock, self.config, self.initThreads, self.runWorker, self.requestHandler)

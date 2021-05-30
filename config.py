@@ -1,3 +1,5 @@
+import os
+
 class Config:
     consts = {
         'max_packet': 1024,
@@ -36,8 +38,9 @@ class Config:
     indexPath = 'html'
     indexFile = '/index.html'
 
-    thread_count = 64
-    cpu_limit = 4
+    thread_count = 2
+    cpu_limit = 2
+    # cpu_limit = os.cpu_count()
 
     responseHeaders = {
         'Connection': 'close',
