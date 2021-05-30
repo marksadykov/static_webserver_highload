@@ -76,7 +76,7 @@ class Server:
     def start(self, serverSock, config, initThreads, runWorker, requestHandler):
         process_pool = []
 
-        for index in range(config.cpu_limit):
+        for index in range(config.cpu):
             process = Process(target=initThreads, args=(serverSock, config, runWorker, requestHandler))
             process.start()
             process_pool.append(process)

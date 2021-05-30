@@ -16,6 +16,8 @@ class Config:
         'version': 'HTTP/1.1',
     }
 
+    cpu = 8
+
     mimeTypes = {
         'html': 'text/html',
         'js': 'application/javascript',
@@ -39,7 +41,7 @@ class Config:
     indexFile = '/index.html'
 
     thread_count = 4
-    cpu_limit = 2
+
 
     responseHeaders = {
         'Connection': 'close',
