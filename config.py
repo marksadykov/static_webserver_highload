@@ -38,9 +38,8 @@ class Config:
     indexPath = 'html'
     indexFile = '/index.html'
 
-    thread_count = 2
+    thread_count = 4
     cpu_limit = 2
-    # cpu_limit = os.cpu_count()
 
     responseHeaders = {
         'Connection': 'close',
